@@ -1,6 +1,17 @@
 import cv2
-import imutils
+'''
+Task 1: Assign the number (1 to 4) below the image of the rectangle with respect to its
+length inside the rectangle. The shorter the line lower the number (No need to reorder the
+image of the rectangle, only give numbering)
 
+Things I tried to do: 
+Since I had to compare the inner line of each rectangle to give them a 
+number, I have used ContoursDetection. The line inside also has the sharpe edges and will be 
+detected as the seperate contour thats why I was sure that I could detect them seperately on the whole image.
+After detecting all the contours of the image including lines, I calculated the area of each contours. Since,
+all the lines are smaller than the rectangles and each line has their own area, I sorted them in ascending 
+order to get the first 4 smallest contours. And based on that, I gave their corresponding rectangle a number.
+'''
 img = cv2.imread('images/treeleaf_task.png')
 
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -25,47 +36,4 @@ for i, cont in enumerate(sor[:4], 1):
 
 cv2.imshow('image', img)
 cv2.waitKey(0)
-
-# cv2.drawContours(img,con,contourIdx=-1, color=(255,0, 0), thickness=0 )
-# cv2.imshow('image', img)
-# cv2.waitKey(0)
-
-# for i, conn in enumerate(con):
-
-#     if hierarchy[0][i][3] == -1:
-#         cv2.drawContours(img, contours=[conn], contourIdx=-1, color=(255,0, 0), thickness=0)
-#         cv2.imshow('threshold', img)
-
-#         cv2.waitKey(0)
-
-#     else:
-#         print('afdaf')
-
-
-# for c in con:
-#     # print(c)
-#     approx = cv2.approxPolyDP(c, 0.04*cv2.arcLength(c, True), True)
-
-#     cv2.drawContours(img, [approx], 0, (0, 150, 0), 2)
-
-#     x = approx.ravel()[0]
-#     y = approx.ravel()[1]
-#     if len(approx) == 2:
-
-#         # print('h',hierarchy)
-
-#         cv2.drawContours(img, contours=[approx], contourIdx=-1, color=(
-#             255, 0, 0), thickness=0)
-#         cv2.putText(img, "line", (x, y), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 0))
-
-#         # print(len(approx))
-#         # for a in approx:
-#         #     print('a', a)
-#         #     print('xy', x, y)
-#         #     print()
-
-
-# cv2.imshow("shapes", img)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
 
