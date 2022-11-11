@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 '''
 Task 2: Align(make the rectangle image straight) all the given images of the rectangle.
 
@@ -24,6 +25,8 @@ contours, hierarchy = cv2.findContours(
 
 img_d = img.copy()
 
+output = np.zeros(img.shape[:2])
+
 for i, con in enumerate(contours):
 
     if hierarchy[0][i][3] == 0: #only getting the contours of the rectangles.
@@ -44,9 +47,12 @@ for i, con in enumerate(contours):
 
         R = cv2.getRotationMatrix2D((x, y), 90, 1) 
 
-        # img_d = cv2.warpAffine(img_d, R, dsize=(int(height),int(width)))
-
-        # cv2.drawContours(img_d, [box], 0, (255,0,0),2)
+        con = cv2.warpAffine(con, R, dsize=(int(height),int(width)))
+        
+        # cv2.rectangle(output,(255,110),(750,210),(1,1,1),-1 )
+        
+        #I tried to apply the rotation but could not do it.
+        
 
         cv2.imshow('original img', img_d[291:370])
         break
