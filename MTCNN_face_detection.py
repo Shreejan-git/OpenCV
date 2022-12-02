@@ -6,41 +6,54 @@ import uuid
 import numpy as np
 
 
-def euclidean_distance(point_one, point_two):
-    x1, y1 = point_one
-    x2, y2 = point_two
-
-    distance = np.sqrt((x2-x1)**2 + (y2-y1**2))
-    return distance
-
-
 def align_face_mtcnn(img, left_eye, right_eye):
-    if left_eye[1] > right_eye[1]:
-        # -1 indicates the image will rotate in the clockwise direction
-        third_point = (right_eye[0], left_eye[1])
-        cv2.circle(img, third_point, 2, (255, 0, 0), 2)
-        direction = -1
-    else:
-        third_point = (left_eye[0], right_eye[1])
-        # 1 indicates the image will rotate in the counter clockwise direction
-        cv2.circle(img, third_point, 2, (255, 0, 0), 2)
-        direction = 1
 
-    cv2.line(img, right_eye, left_eye, (0, 255, 0), 2)
-    cv2.line(img, left_eye, third_point, (255, 0, 0), 2)
-    cv2.line(img, right_eye, third_point, (0, 0, 255), 2)
+    desiredLeftEye = (0.38, 0.38)
+    desiredFaceWidth = 256
+    desiredFaceHeight = None
 
-    # delta_x = right_eye[0] -
+    if desiredFaceHeight is None:
+        desiredFaceHeight = desiredFaceWidth
+
+    # if left_eye[1] > right_eye[1]:
+    #     # -1 indicates the image will rotate in the clockwise direction
+    #     third_point = (right_eye[0], left_eye[1])
+    #     # cv2.circle(img, third_point, 2, (255, 0, 0), 2)
+    # else:
+    #     third_point = (left_eye[0], right_eye[1])
+    #     # 1 indicates the image will rotate in the counter clockwise direction
+    #     # cv2.circle(img, third_point, 2, (255, 0, 0), 2)
+    #     direction = 1
+
+    # cv2.line(img, right_eye, left_eye, (0, 255, 0), 2)
+    # cv2.line(img, left_eye, third_point, (255, 0, 0), 2)
+    # cv2.line(img, right_eye, third_point, (0, 0, 255), 2)
+
     delta_x = right_eye[0] - left_eye[0]
     delta_y = right_eye[1] - left_eye[1]
     angle = np.arctan(delta_y/delta_x)
     angle = (angle * 180) / np.pi
 
-    a = euclidean_distance(left_eye, third_point)
-    b = euclidean_distance(right_eye, left_eye)
-    c = euclidean_distance(right_eye, third_point)
-    
-    return angle
+    desiredRightEyeX = 1.0 - desiredLeftEye[0]
+    dist = np.sqrt((delta_x ** 2) + (delta_y ** 2))
+    desiredDist = (desiredRightEyeX - desiredLeftEye[0])
+    desiredDist *= desiredFaceWidth
+    scale = desiredDist / dist
+
+    eyesCenter = ((left_eye[0] + right_eye[0]) // 2,
+                  (left_eye[1] + right_eye[1]) // 2)
+
+    M = cv2.getRotationMatrix2D(eyesCenter, (angle), scale)
+    tX = desiredFaceWidth * 0.5
+    tY = desiredFaceHeight * desiredLeftEye[1]
+    M[0, 2] += (tX - eyesCenter[0])
+    M[1, 2] += (tY - eyesCenter[1])
+
+    (w, h) = (desiredFaceWidth, desiredFaceHeight)
+
+    rotated = cv2.warpAffine(img, M, (w, h))
+
+    return rotated
 
 
 def mtcnn_face_detector_image(img, path):
@@ -67,37 +80,33 @@ def mtcnn_face_detector_image(img, path):
     print(result)
 
     for i in result:
-        if i['confidence'] > 0.8:
-            x, y, w, h = i['box']
+        if i['confidence'] > 0.8: #setting the threshold
+            
+            #Uncomment below code to see the B.box of detected face and the landmarks
+            # x, y, w, h = i['box']
+            # img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 1)
 
-            # face detection
-            # image, startpoint, endpoint, color, thickness
-            img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 1)
-
-            c = 0
-            for (x, y) in i['keypoints'].values():
-                cv2.circle(img, (x, y), 3, (0, 0, 255), -1)
-                cv2.putText(img, str(c + 1), (x - 10, y - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 1)
-                c += 1
+            # c = 0
+            # for (x, y) in i['keypoints'].values():
+            #     cv2.circle(img, (x, y), 3, (0, 0, 255), -1)
+            #     cv2.putText(img, str(c + 1), (x - 10, y - 10),
+            #                 cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 1)
+            #     c += 1
 
             left_eye = i['keypoints']['left_eye']
             right_eye = i['keypoints']['right_eye']
             # cv2.line(img, right_eye, left_eye, (67, 67, 67), 2)
 
-            angle = align_face_mtcnn(img, left_eye, right_eye)
+            rotated = align_face_mtcnn(
+                img, left_eye, right_eye)  # face alignment
 
-            h, w = img.shape[:2]
-
-            center = (w // 2, h // 2)
-
-            M = cv2.getRotationMatrix2D(center, (angle), 1.0)
-            rotated = cv2.warpAffine(img, M, (w, h))
             cv2.imshow('rotated', rotated)
             cv2.waitKey(0)
 
+        #Below code will give the new image with required area of interest
         # path = os.path.join(path, f'{str(uuid.uuid1())}.jpg')
         # cv2.imwrite(path, img)
+
 
 if __name__ == '__main__':
 
