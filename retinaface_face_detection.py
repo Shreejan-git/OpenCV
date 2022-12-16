@@ -7,11 +7,11 @@ import numpy as np
 
 def retineface_detector(image_path, output_path=None):
     '''
-    this function returns the image-array 
     Original: https://github.com/deepinsight/insightface/tree/master/detection/retinaface
     '''
     image = cv2.imread(image_path)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            
     # resp = RetinaFace.detect_faces(image)
 
     # for key in resp.keys():
@@ -32,48 +32,32 @@ def retineface_detector(image_path, output_path=None):
 
     faces = RetinaFace.extract_faces(img_path=image, align=True)
     nfd = len(faces)  # number of face detected
-    print(nfd)
 
-    if nfd == 0:
-        return f'No face detected on the given image: {image_path}'
-    
+    if nfd == 0: #if detector could not detect the image
+        return f'No human face detected on the given image: {image_path}'
+
     else:
-        # for face in faces:
-            # cv2.imshow('RetinaFace', face) #this face needs to be send to FR model
-            # cv2.waitKey()
-
-            # Below code will give the new cropped and aligned image.
-            # img_name = image_path.split('/')[-1].split('.')[0]
-            # path = os.path.join(output_path, f'{img_name+str(np.random.randint(0,100))}.jpg')
+        #if output_path is None then its for real-time face verification.
+        #else its for building a test-cases.
+        if output_path is None:
+            print(f'No of faces detected: {nfd} in {image_path} image')
+            return faces
+        else:
+            # Below code will return and save the new cropped and aligned image to the output_path.
+            #folder and file, and file's name hirarchy is not dynamic.
+            img_name = image_path.split('/')[-1].split('.')[0] 
             # path = 'images/shreejan_test6.jpg'
-            # cv2.imwrite(path, face)
-            # print('1 face detected on the given image')
-            # print(face)
-            # return face
-        print(f'No of faces detected {nfd}')
-        return faces
-        
-    '''
-    elif nfd == 1:
-        for face in faces:
-            # cv2.imshow('RetinaFace', face) #this face needs to be send to FR model
-            # cv2.waitKey()
+            for face in faces:
+                path = os.path.join(output_path, f'{img_name+str(np.random.randint(0,100))}.jpg')
+                cv2.imwrite(path, face)
 
-            # Below code will give the new cropped and aligned image.
-            # img_name = image_path.split('/')[-1].split('.')[0]
-            # path = os.path.join(output_path, f'{img_name+str(np.random.randint(0,100))}.jpg')
-            # path = 'images/shreejan_test6.jpg'
-            # cv2.imwrite(path, face)
-            print('1 face detected on the given image')
-            print(face)
-            # return face
-    else:
-        print(face)
-        # if we detect multiple of faces in a single image, each face needs to be handled and sent to FR model for recognition
-        return f'Multiple face detected on the given image: {image_path}'
-    '''
 
 def main_fun(base_dir):
+    '''
+    This function is just for building the test cases for multiple images. 
+    It provides series of images, residing in the disk, to the retineface_detector 
+    function to test the time taken to detect the faces and align them.
+    '''
     sub_dir = os.listdir(base_dir)
     start = time.time()
     for sub in sub_dir:
@@ -100,13 +84,9 @@ def main_fun(base_dir):
 if __name__ == '__main__':
     base_dir = 'retina'
 
-    # image = 'images/netra_test.jpg'
-    # image = 'images/tilted_head.jpg'
-    image = 'images/self11.jpeg'
-    # image = 'images/twogirls.png'
-    # image = 'aaa/pravesh_77.jpg'
-    # image = 'images/team.jpg'
+    image = 'images/asha_bhosle2.jpg'
     for face in retineface_detector(image):
         cv2.imshow('face', face)
         cv2.waitKey()
+        
     # main_fun(base_dir)
