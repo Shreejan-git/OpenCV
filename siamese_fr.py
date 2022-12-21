@@ -160,7 +160,13 @@ def make_siamese_network():
     return Model(inputs=[input_image, validation_image], outputs=[classifier], name='SiameseNetwork')
     
 binary_cross_loss = tf.losses.BinaryCrossentropy() #from_logit = True 
+opt = tf.keras.optimizers.Adam(1e-4)
 
+#establishing the checkpoint
+siamese_model = make_siamese_network()
+checkpoint_dir = './training_checkpoints'
+checkpoint_prefix = os.path.join(checkpoint_dir, 'ckpt')
+checkpoint = tf.train.Checkpoint(opt=opt, siamese_model=siamese_model)
 
 
 
