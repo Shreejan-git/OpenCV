@@ -5,6 +5,7 @@ import tensorflow as tf
 from keras.models import Model
 from keras.layers import Layer, Dense, Conv2D, MaxPool2D, Flatten, Input
 import uuid
+from keras.metrics import Precision, Recall
 
 # link to the dataset: http://vis-www.cs.umass.edu/lfw/
 # link to the paper: https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf
@@ -216,13 +217,33 @@ def train(data, EPOCHS):
         
     
 EPOCHS = 15
-train(train_data, EPOCHS)
+# train(train_data, EPOCHS)
 
 
-        
-    
+#get a btach of test data
+test_input, test_val, y_true = test_data.as_numpy_iterator().next()
+
+test_var = test_data.as_numpy_iterator().next() 
+
+y_hat = siamese_model.predict([test_input, test_val])
+print(y_hat)
+
+predicted_value = [1 if prediction > 0.5 else 0 for prediction in y_hat]
+
+#creating a matric object
+m = Recall()
+#calculating the recall value
+m.update_state(y_true, y_hat)
+#return recall result
+m.result().numpy()
 
 
+#save model
+siamese_model.save('siamesemodel.h5')
 
 
+model = tf.keras.models.load_model('siamesemodel.h5', custom_objects={'L1Dist':L1Dist})
+
+#if we want to predict the using our custom build model
+#model.predict([test_input, test_val])
 
