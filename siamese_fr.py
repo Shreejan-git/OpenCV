@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 import os
 import tensorflow as tf
-from tensorflow import keras
 from keras.models import Model
 from keras.layers import Layer, Dense, Conv2D, MaxPool2D, Flatten, Input
 import uuid
@@ -79,7 +78,7 @@ def image_preprocess(img_path):
     img = tf.io.decode_jpeg(image)
     
     #scaling (normalizing) the image to 0-1 pixel value
-    img = tf.image.resize(img, (105,105))
+    img = tf.image.resize(img, (100,100))
     
     img = img/255.0
     
@@ -107,7 +106,7 @@ train_data = train_data.prefetch(8)
 
 train_samples = train_data.as_numpy_iterator()
 train_sample = train_samples.next()
-print(len(train_sample[0]))
+# print(len(train_sample[0]))
 
 #testing partition
 test_data = data.skip(round(len(data)*.7))
@@ -135,17 +134,16 @@ def make_embeddings():
     
     return Model(inputs=[inp], outputs=[d1], name='embedding')
     
-# model = make_embeddings()
-# print(model.summary())
+embedding = make_embeddings()
+# embedding.summary()
 
 class L1Dist(Layer):
     def __init__(self, **kwargs):
         super().__init__()
-        
+    
     def call(self, input_embedding, validation_embedding):
-        return tf.math.abs(input_embedding, validation_embedding)
+        return tf.math.abs(input_embedding - validation_embedding)
         
-
 def make_siamese_network():
     input_image = Input(shape=(100,100,3), name='input_img')
     
@@ -153,21 +151,76 @@ def make_siamese_network():
     
     siamese_layer = L1Dist()
     siamese_layer._name = 'distance'
-    distances = siamese_layer(make_embeddings(input_image), make_embeddings(validation_image))
+    distances = siamese_layer(embedding(input_image),embedding(validation_image))
     
     classifier = Dense(1, activation='sigmoid')(distances)
     
     return Model(inputs=[input_image, validation_image], outputs=[classifier], name='SiameseNetwork')
     
+    
+# m = make_siamese_network()
+# print(m.summary)
 binary_cross_loss = tf.losses.BinaryCrossentropy() #from_logit = True 
 opt = tf.keras.optimizers.Adam(1e-4)
 
-#establishing the checkpoint
+# establishing the checkpoint
 siamese_model = make_siamese_network()
 checkpoint_dir = './training_checkpoints'
 checkpoint_prefix = os.path.join(checkpoint_dir, 'ckpt')
 checkpoint = tf.train.Checkpoint(opt=opt, siamese_model=siamese_model)
 
+@tf.function
+def train_step(batch):
+    
+    with tf.GradientTape() as tape:
+        
+        #x has anchor and positive or negative image
+        X = batch[:2]
+        #y has the label
+        y = batch[2]
+        
+        #forward pass
+        #training = True research
+        yhat = siamese_model(X, training=True)
+        
+        #calculate loss
+        
+        loss = binary_cross_loss(y, yhat)
+        
+        
+    #calculate gradients
+    grad = tape.gradient(loss, siamese_model.trainable_variables)
+    
+    #calculate updated weights and apply to siamese model
+    opt.apply_gradients(zip(grad, siamese_model.trainable_variables))
+    
+    return loss
+  
+
+def train(data, EPOCHS):
+    
+    #loop through epochs
+    for epoch in range(1, EPOCHS+1):
+        print('\n Epoch {}/{}'.format(epoch, EPOCHS))
+        progbar = tf.keras.utils.Progbar(len(data))
+                                            
+        #loop through each batch
+        for idx, batch in enumerate(data):
+            train_step(batch)
+            progbar.update(idx+1)
+            
+        #save checkpoints
+        if epoch % 10 == 0:
+            checkpoint.save(file_prefix=checkpoint_prefix)
+            
+        
+    
+EPOCHS = 15
+train(train_data, EPOCHS)
+
+
+        
+    
 
 
 
