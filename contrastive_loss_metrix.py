@@ -3,7 +3,7 @@ import tensorflow as tf
 
 def contrastive_loss(y, preds, margin=1):
     ''' 
-    y: Y labels of the data
+    y: the ground-truth labels of the dataset (1: images of same class and 0: images of different class)
     preds: value returned by euclidean distance 
     margin:
     '''
