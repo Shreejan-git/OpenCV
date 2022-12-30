@@ -45,8 +45,6 @@ def make_pairs(images, labels):
     return (np.array(pairImages), np.array(pairLabels))
 
 
-
-
 def euclidean_distance(vectors):
     '''
     This function has one parameter: vectors.
@@ -74,6 +72,7 @@ def plot_training(H, plotPath):
     plt.ylabel("Loss/Accuracy")
     plt.legend(loc="lower left")
     plt.savefig(plotPath)
+    plt.show()
  
  
 if __name__ == '__main__':
