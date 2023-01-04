@@ -29,7 +29,6 @@ for (i, (pathA, pathB)) in enumerate(pairs):
     origB = imageB.copy()
     
     #resizing the image according to the model's input requirement
-    
     imageA = cv2.resize(imageA, (28,28))
     imageB = cv2.resize(imageB, (28,28))
     
@@ -45,6 +44,9 @@ for (i, (pathA, pathB)) in enumerate(pairs):
     # use our siamese model to make predictions on the image pair,
     # indicating whether or not the images belong to the same class
     preds = model.predict(input_images)
+    # print(preds)
+    # break
+
     proba = preds[0][0]
     fig = plt.figure("Pair #{}".format(i + 1), figsize=(4, 2))
     plt.suptitle("Similarity: {:.2f}".format(proba))
